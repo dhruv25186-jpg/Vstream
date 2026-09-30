@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details - VStream</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">VStream</a>
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="category.html?type=movie">Movies</a>
+                <a href="category.html?type=tv">TV Shows</a>
+                <a href="mylist.html">My List</a>
+            </nav>
+            <div class="nav-actions">
+                <form id="search-form" class="search-box">
+                    <input type="text" id="search-input" placeholder="Search...">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+                <div class="hamburger"><i class="fas fa-bars"></i></div>
+            </div>
+        </div>
+        <div class="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="category.html?type=movie">Movies</a>
+            <a href="category.html?type=tv">TV Shows</a>
+            <a href="mylist.html">My List</a>
+        </div>
+    </header>
+
+    <div id="detail-page-container">
+        <!-- Hero section for details -->
+        <section id="detail-hero" class="detail-hero">
+            <div class="detail-hero-content">
+                <button class="back-btn" onclick="history.back()"><i class="fas fa-arrow-left"></i> Back</button>
+                <div class="detail-layout">
+                    <div class="detail-poster">
+                        <img id="detail-poster-img" src="" alt="Poster" style="display:none;">
+                        <div class="card-skeleton detail-skeleton-poster"></div>
+                    </div>
+                    <div class="detail-info">
+                        <h1 id="detail-title" class="skeleton-text skeleton-title"></h1>
+                        <p id="detail-tagline" class="tagline"></p>
+                        
+                        <div class="detail-meta skeleton-text skeleton-meta">
+                            <span id="detail-rating" class="rating"><i class="fas fa-star"></i> </span>
+                            <span id="detail-date"></span>
+                            <span id="detail-runtime"></span>
+                        </div>
+                        
+                        <div id="detail-genres" class="genres-list skeleton-text skeleton-genres"></div>
+                        
+                        <div class="overview">
+                            <h3>Overview</h3>
+                            <p id="detail-overview" class="skeleton-text skeleton-desc"></p>
+                        </div>
+                        
+                        <div class="detail-actions">
+                            <button id="btn-play-trailer" class="btn btn-primary"><i class="fas fa-play"></i> Watch Now</button>
+                            <button id="btn-add-list" class="btn btn-secondary"><i class="fas fa-plus"></i> Add to My List</button>
+                            <button id="btn-share" class="btn btn-icon"><i class="fas fa-share-alt"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-fade-bottom"></div>
+        </section>
+
+        <main class="main-content">
+            <section class="content-row">
+                <h2>Top Cast</h2>
+                <div class="carousel-container">
+                    <button class="slider-btn prev-btn"><i class="fas fa-chevron-left"></i></button>
+                    <div class="carousel cast-carousel" id="cast-row">
+                        <!-- Skeletons -->
+                        <div class="cast-skeleton"></div>
+                        <div class="cast-skeleton"></div>
+                        <div class="cast-skeleton"></div>
+                        <div class="cast-skeleton"></div>
+                    </div>
+                    <button class="slider-btn next-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </section>
+
+            <section class="content-row">
+                <h2>Similar <span id="similar-type"></span></h2>
+                <div class="carousel-container">
+                    <button class="slider-btn prev-btn"><i class="fas fa-chevron-left"></i></button>
+                    <div class="carousel" id="similar-row">
+                        <!-- Skeletons -->
+                        <div class="card-skeleton"></div>
+                        <div class="card-skeleton"></div>
+                        <div class="card-skeleton"></div>
+                        <div class="card-skeleton"></div>
+                    </div>
+                    <button class="slider-btn next-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p class="copyright">&copy; 2026 VStream. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <button id="scroll-top"><i class="fas fa-arrow-up"></i></button>
+    <div id="toast-container"></div>
+    <div id="video-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="video-container" id="video-player-container"></div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/movie.js"></script>
+</body>
+</html>

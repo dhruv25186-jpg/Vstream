@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My List - VStream</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">VStream</a>
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="category.html?type=movie">Movies</a>
+                <a href="category.html?type=tv">TV Shows</a>
+                <a href="mylist.html" class="active">My List</a>
+            </nav>
+            <div class="nav-actions">
+                <form id="search-form" class="search-box">
+                    <input type="text" id="search-input" placeholder="Search...">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+                <div class="hamburger"><i class="fas fa-bars"></i></div>
+            </div>
+        </div>
+        <div class="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="category.html?type=movie">Movies</a>
+            <a href="category.html?type=tv">TV Shows</a>
+            <a href="mylist.html" class="active">My List</a>
+        </div>
+    </header>
+
+    <main class="main-content page-padding top-padding" style="min-height: 80vh;">
+        <div class="category-header">
+            <h1>My Watchlist</h1>
+        </div>
+
+        <div id="empty-list" class="empty-state" style="display:none;">
+            <h2>Your list is empty</h2>
+            <p>Add shows and movies that you want to watch later by clicking "Add to My List".</p>
+            <a href="index.html" class="btn btn-primary" style="margin-top: 20px;">Browse Content</a>
+        </div>
+
+        <div class="grid-layout" id="mylist-results">
+            <!-- Items injected by JS -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p class="copyright">&copy; 2026 VStream. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <button id="scroll-top"><i class="fas fa-arrow-up"></i></button>
+    <div id="toast-container"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/mylist.js"></script>
+</body>
+</html>

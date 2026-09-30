@@ -1,0 +1,57 @@
+/* Responsive Styles */
+
+@media screen and (max-width: 1200px) {
+    .hero h1 { font-size: 3rem; }
+    .grid-layout { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .movie-card { flex: 0 0 180px; }
+    .movie-card img { height: 270px; }
+    .card-skeleton { flex: 0 0 180px; height: 270px; }
+}
+
+@media screen and (max-width: 1024px) {
+    .detail-layout { flex-direction: column; align-items: center; text-align: center; }
+    .detail-poster { flex: 0 0 auto; width: 250px; }
+    .detail-meta, .genres-list { justify-content: center; }
+    .detail-actions { justify-content: center; }
+    .hero-content { max-width: 80%; }
+}
+
+@media screen and (max-width: 768px) {
+    .nav-links { display: none; }
+    .hamburger { display: block; }
+    .search-box { display: none; }
+    
+    .hero { min-height: 400px; height: 60vh; }
+    .hero-content { margin-left: 20px; padding-top: 80px; }
+    .hero h1 { font-size: 2.5rem; }
+    
+    .grid-layout { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+    .movie-card { flex: 0 0 140px; }
+    .movie-card img { height: 210px; }
+    .card-skeleton { flex: 0 0 140px; height: 210px; }
+    
+    .slider-btn { display: none; } /* Better touch scrolling on mobile */
+    .carousel { padding-bottom: 10px; }
+    
+    .detail-info h1 { font-size: 2.2rem; }
+    .detail-poster { width: 200px; }
+    
+    .filter-tabs { flex-wrap: wrap; }
+}
+
+@media screen and (max-width: 480px) {
+    .hero h1 { font-size: 2rem; }
+    .hero p { font-size: 0.9rem; }
+    .btn { padding: 8px 16px; font-size: 14px; }
+    
+    .grid-layout { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .movie-card, .card-skeleton { flex: 0 0 130px; }
+    .movie-card img { height: 195px; }
+    
+    .cast-card, .cast-skeleton { flex: 0 0 100px; }
+    .cast-img { width: 100px; height: 100px; }
+    
+    .detail-info h1 { font-size: 1.8rem; }
+    .detail-actions { flex-direction: column; width: 100%; }
+    .detail-actions .btn { width: 100%; justify-content: center; }
+}
