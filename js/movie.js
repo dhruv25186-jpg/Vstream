@@ -171,98 +171,112 @@ const modal = document.getElementById('video-modal');
 const closeBtn = document.querySelector('.close-modal');
 const videoContainer = document.getElementById('video-player-container');
 
+let currentSeason = 1;
+let currentEpisode = 1;
+
 function openTrailerModal(mode = 'stream') {
     const title = currentItem ? (currentItem.title || currentItem.name) : 'Video';
-    
-    // Direct, ultra-fast CDN video streams (100% accessible worldwide with no ISP blocking)
-    const streamSources = [
-        { name: "Server 1 (Fast HD 1080p Stream - Ocean)", url: "https://vjs.zencdn.net/v/oceans.mp4" },
-        { name: "Server 2 (Sintel Action HD Stream)", url: "https://media.w3.org/2010/05/sintel/trailer.mp4" },
-        { name: "Server 3 (Buck Bunny 4K Stream)", url: "https://media.w3.org/2010/05/bunny/trailer.mp4" }
+    const id = currentItem ? currentItem.id : '';
+    const type = currentType || 'movie';
+    const totalSeasons = (currentItem && currentItem.number_of_seasons) ? currentItem.number_of_seasons : 5;
+
+    // Helper to generate third-party streaming provider URLs for the selected movie/series
+    function getThirdPartyStreamUrl(providerKey, s = currentSeason, e = currentEpisode) {
+        if (type === 'tv') {
+            switch(providerKey) {
+                case 'vidlink': return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+                case 'autoembed': return `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`;
+                case 'embedsu': return `https://embed.su/embed/tv/${id}/${s}/${e}`;
+                case 'vidsrc': return `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`;
+                case 'twoembed': return `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`;
+                case 'smashy': return `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`;
+                default: return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+            }
+        } else {
+            // Movie
+            switch(providerKey) {
+                case 'vidlink': return `https://vidlink.pro/movie/${id}`;
+                case 'autoembed': return `https://player.autoembed.cc/embed/movie/${id}`;
+                case 'embedsu': return `https://embed.su/embed/movie/${id}`;
+                case 'vidsrc': return `https://vidsrc.cc/v2/embed/movie/${id}`;
+                case 'twoembed': return `https://www.2embed.cc/embed/${id}`;
+                case 'smashy': return `https://embed.smashystream.com/playere.php?tmdb=${id}`;
+                default: return `https://vidlink.pro/movie/${id}`;
+            }
+        }
+    }
+
+    const streamProviders = [
+        { key: "vidlink", name: "Server 1 (VidLink Pro - Fast & Multi-Subtitles)", type: "embed" },
+        { key: "autoembed", name: "Server 2 (AutoEmbed Multi-Source)", type: "embed" },
+        { key: "embedsu", name: "Server 3 (EmbedSU Cloud HD)", type: "embed" },
+        { key: "vidsrc", name: "Server 4 (VidSrc CC Global)", type: "embed" },
+        { key: "twoembed", name: "Server 5 (2Embed Multi-Host)", type: "embed" },
+        { key: "smashy", name: "Server 6 (SmashyStream Fast)", type: "embed" },
+        { key: "cdn_ocean", name: "Server 7 (VStream Direct CDN - 1080p)", type: "direct", url: "https://vjs.zencdn.net/v/oceans.mp4" },
+        { key: "cdn_sintel", name: "Server 8 (VStream Direct CDN - Sintel)", type: "direct", url: "https://media.w3.org/2010/05/sintel/trailer.mp4" }
     ];
+
+    let selectedProvider = streamProviders[0];
 
     let modalHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
             <div>
                 <h3 style="color:#fff; font-size:1.3rem; font-weight:700; margin-bottom:4px;">${title}</h3>
-                <span style="color:#aaa; font-size:12px;"><i class="fas fa-circle" style="color:#00e676; font-size:10px;"></i> VStream Ultra Player Active (1080p FHD)</span>
+                <span style="color:#aaa; font-size:12px;">
+                    <i class="fas fa-circle" style="color:#00e676; font-size:10px;"></i> Third-Party Movie Streaming Cloud Active
+                </span>
             </div>
             <div style="display:flex; gap:10px;">
-                <button id="tab-stream" class="btn ${mode === 'stream' ? 'btn-primary' : 'btn-secondary'}" style="padding:7px 16px; font-size:13px;"><i class="fas fa-play"></i> Watch Stream</button>
-                ${trailerKey ? `<button id="tab-trailer" class="btn ${mode === 'trailer' ? 'btn-primary' : 'btn-secondary'}" style="padding:7px 16px; font-size:13px;"><i class="fab fa-youtube"></i> YouTube Trailer</button>` : ''}
+                <button id="tab-stream" class="btn ${mode === 'stream' ? 'btn-primary' : 'btn-secondary'}" style="padding:7px 16px; font-size:13px;"><i class="fas fa-play"></i> Watch Movie</button>
+                ${trailerKey ? `<button id="tab-trailer" class="btn ${mode === 'trailer' ? 'btn-primary' : 'btn-secondary'}" style="padding:7px 16px; font-size:13px;"><i class="fab fa-youtube"></i> Trailer</button>` : ''}
             </div>
         </div>
     `;
 
     if (mode === 'stream') {
         modalHTML += `
-            <div class="custom-player-box" id="vstream-player-container">
-                <video id="main-video-player" playsinline preload="auto">
-                    <source id="main-video-source" src="${streamSources[0].url}" type="video/mp4">
-                    Your browser does not support HTML5 video streaming.
-                </video>
-
-                <!-- Center Play Overlay Button -->
-                <div class="center-play-overlay" id="center-play-btn">
-                    <i class="fas fa-play"></i>
-                </div>
-
-                <!-- Custom Bottom Control Bar -->
-                <div class="custom-player-controls" id="player-controls-bar">
-                    <!-- Progress Bar -->
-                    <div class="custom-progress-area" id="progress-area">
-                        <div class="custom-progress-filled" id="progress-filled"></div>
-                    </div>
-
-                    <div class="custom-controls-row">
-                        <!-- Left controls -->
-                        <div class="custom-controls-left">
-                            <button class="player-ctrl-btn play-pause-main" id="ctrl-play-pause">
-                                <i class="fas fa-play"></i>
-                            </button>
-                            <button class="player-ctrl-btn" id="ctrl-rewind-10" title="Rewind 10s">
-                                <i class="fas fa-undo"></i>
-                            </button>
-                            <button class="player-ctrl-btn" id="ctrl-forward-10" title="Forward 10s">
-                                <i class="fas fa-redo"></i>
-                            </button>
-                            <div class="volume-group">
-                                <button class="player-ctrl-btn" id="ctrl-volume-icon">
-                                    <i class="fas fa-volume-up"></i>
-                                </button>
-                                <input type="range" class="volume-slider" id="ctrl-volume-slider" min="0" max="1" step="0.05" value="0.8">
-                            </div>
-                            <span class="player-time-text" id="player-time-display">00:00 / 00:00</span>
-                        </div>
-
-                        <!-- Right controls -->
-                        <div class="custom-controls-right">
-                            <select class="speed-dropdown" id="ctrl-speed-select">
-                                <option value="0.75">0.75x</option>
-                                <option value="1" selected>1.0x (Normal)</option>
-                                <option value="1.25">1.25x</option>
-                                <option value="1.5">1.5x</option>
-                                <option value="2">2.0x</option>
-                            </select>
-                            <button class="player-ctrl-btn" id="ctrl-fullscreen" title="Fullscreen">
-                                <i class="fas fa-expand"></i>
-                            </button>
-                        </div>
-                    </div>
+            <div id="player-display-area" style="position:relative; width:100%; border-radius:12px; overflow:hidden; background:#000; box-shadow:0 15px 40px rgba(0,0,0,0.9);">
+                <div id="iframe-wrapper" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; background:#000;">
+                    <iframe id="main-stream-frame" 
+                        src="${getThirdPartyStreamUrl(selectedProvider.key)}" 
+                        allowfullscreen 
+                        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                        style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;">
+                    </iframe>
                 </div>
             </div>
 
-            <!-- Server switcher & Info bar -->
-            <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#161616; padding:12px 18px; border-radius:8px; border:1px solid #282828;">
+            <!-- TV Season / Episode Selector (If TV Show) -->
+            ${type === 'tv' ? `
+            <div style="margin-top:12px; background:#181818; padding:12px 18px; border-radius:8px; display:flex; gap:15px; align-items:center; flex-wrap:wrap; border:1px solid #333;">
+                <span style="color:#fff; font-weight:600; font-size:13px;"><i class="fas fa-list-ol"></i> Choose Episode:</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color:#bbb; font-size:13px;">Season:</span>
+                    <select id="season-select" style="background:#222; color:#fff; border:1px solid #555; padding:6px 12px; border-radius:4px; font-size:13px; outline:none; cursor:pointer;">
+                        ${Array.from({length: totalSeasons}, (_, i) => `<option value="${i+1}" ${currentSeason === (i+1) ? 'selected' : ''}>Season ${i+1}</option>`).join('')}
+                    </select>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color:#bbb; font-size:13px;">Episode:</span>
+                    <select id="episode-select" style="background:#222; color:#fff; border:1px solid #555; padding:6px 12px; border-radius:4px; font-size:13px; outline:none; cursor:pointer;">
+                        ${Array.from({length: 24}, (_, i) => `<option value="${i+1}" ${currentEpisode === (i+1) ? 'selected' : ''}>Episode ${i+1}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Server switcher & controls -->
+            <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#141414; padding:12px 18px; border-radius:8px; border:1px solid #282828;">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="color:#eee; font-size:13px; font-weight:600;"><i class="fas fa-server"></i> Switch Stream Source:</span>
+                    <span style="color:#eee; font-size:13px; font-weight:600;"><i class="fas fa-server"></i> Switch Provider / Server:</span>
                     <select id="server-select" style="background:#222; color:#fff; border:1px solid #444; padding:6px 12px; border-radius:4px; font-size:13px; outline:none; cursor:pointer;">
-                        ${streamSources.map((s, idx) => `<option value="${s.url}">${s.name}</option>`).join('')}
+                        ${streamProviders.map((s, idx) => `<option value="${idx}">${s.name}</option>`).join('')}
                     </select>
                 </div>
                 <div style="color:#aaa; font-size:13px; display:flex; gap:15px;">
-                    <span><i class="fas fa-shield-alt" style="color:#4caf50;"></i> Ad-Free Stream</span>
-                    <span><i class="fas fa-bolt" style="color:#ffb300;"></i> Instant CDN Buffering</span>
+                    <span><i class="fas fa-shield-alt" style="color:#4caf50;"></i> Multi-Source Streaming</span>
+                    <span><i class="fas fa-closed-captioning"></i> Subtitles & Multi-Audio</span>
                 </div>
             </div>
         `;
@@ -278,7 +292,7 @@ function openTrailerModal(mode = 'stream') {
                 </iframe>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; flex-wrap:wrap; gap:10px; background:#181818; padding:12px 16px; border-radius:6px;">
-                <span style="color:#aaa; font-size:13px;"><i class="fas fa-exclamation-triangle" style="color:#f39c12;"></i> If YouTube blocks trailer embedding, open in YouTube or click "Watch Stream" above.</span>
+                <span style="color:#aaa; font-size:13px;"><i class="fas fa-info-circle" style="color:#f39c12;"></i> Official YouTube trailer stream for this title.</span>
                 <a href="https://www.youtube.com/watch?v=${trailerKey}" target="_blank" 
                    class="btn btn-secondary" style="display:inline-flex; gap:8px; align-items:center; font-size:13px; padding:6px 14px;">
                     <i class="fab fa-youtube" style="color:#ff0000;"></i> Open YouTube Tab
@@ -296,138 +310,61 @@ function openTrailerModal(mode = 'stream') {
     if (tabTrailer) tabTrailer.onclick = () => openTrailerModal('trailer');
     if (tabStream) tabStream.onclick = () => openTrailerModal('stream');
 
-    if (mode === 'stream') {
-        setupCustomVideoPlayer();
-    }
-}
+    // Function to reload stream frame
+    function reloadStreamFrame() {
+        const playerArea = document.getElementById('player-display-area');
+        if (!playerArea) return;
 
-function setupCustomVideoPlayer() {
-    const video = document.getElementById('main-video-player');
-    const centerPlayBtn = document.getElementById('center-play-btn');
-    const playPauseBtn = document.getElementById('ctrl-play-pause');
-    const rewindBtn = document.getElementById('ctrl-rewind-10');
-    const forwardBtn = document.getElementById('ctrl-forward-10');
-    const progressArea = document.getElementById('progress-area');
-    const progressFilled = document.getElementById('progress-filled');
-    const timeDisplay = document.getElementById('player-time-display');
-    const volumeIcon = document.getElementById('ctrl-volume-icon');
-    const volumeSlider = document.getElementById('ctrl-volume-slider');
-    const speedSelect = document.getElementById('ctrl-speed-select');
-    const fullscreenBtn = document.getElementById('ctrl-fullscreen');
-    const playerBox = document.getElementById('vstream-player-container');
+        if (selectedProvider.type === 'embed') {
+            const url = getThirdPartyStreamUrl(selectedProvider.key, currentSeason, currentEpisode);
+            playerArea.innerHTML = `
+                <div id="iframe-wrapper" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; background:#000;">
+                    <iframe 
+                        src="${url}" 
+                        allowfullscreen 
+                        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                        style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;">
+                    </iframe>
+                </div>
+            `;
+        } else {
+            // Direct video
+            playerArea.innerHTML = `
+                <video controls autoplay playsinline style="width:100%; max-height:68vh; display:block; outline:none; background:#000;">
+                    <source src="${selectedProvider.url}" type="video/mp4">
+                    Your browser does not support HTML5 video streaming.
+                </video>
+            `;
+        }
+    }
+
+    // Hook Server selection
     const serverSelect = document.getElementById('server-select');
-
-    if (!video) return;
-
-    // Helper: format time mm:ss
-    const formatTime = (seconds) => {
-        if (isNaN(seconds)) return "00:00";
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    // Toggle Play/Pause
-    function togglePlay() {
-        if (video.paused || video.ended) {
-            video.play().then(() => {
-                centerPlayBtn.style.display = 'none';
-                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-            }).catch(e => console.log('Autoplay error:', e));
-        } else {
-            video.pause();
-            centerPlayBtn.style.display = 'flex';
-            centerPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
-            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        }
+    if (serverSelect) {
+        serverSelect.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.value, 10);
+            selectedProvider = streamProviders[idx];
+            reloadStreamFrame();
+            showToast(`Connected to ${selectedProvider.name.split('(')[1].replace(')', '')}`);
+        });
     }
 
-    // Event listeners for play/pause
-    centerPlayBtn.onclick = togglePlay;
-    playPauseBtn.onclick = togglePlay;
-    video.onclick = togglePlay;
-
-    // Try starting video
-    video.play().then(() => {
-        centerPlayBtn.style.display = 'none';
-        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-    }).catch(() => {
-        centerPlayBtn.style.display = 'flex';
-    });
-
-    // Time update & progress bar
-    video.ontimeupdate = () => {
-        if (!video.duration) return;
-        const percent = (video.currentTime / video.duration) * 100;
-        progressFilled.style.width = `${percent}%`;
-        timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-    };
-
-    video.onloadedmetadata = () => {
-        timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-    };
-
-    // Seek on progress bar click
-    progressArea.onclick = (e) => {
-        const rect = progressArea.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const newTime = (clickX / rect.width) * video.duration;
-        video.currentTime = newTime;
-    };
-
-    // Skip forward/backward
-    rewindBtn.onclick = () => video.currentTime = Math.max(0, video.currentTime - 10);
-    forwardBtn.onclick = () => video.currentTime = Math.min(video.duration, video.currentTime + 10);
-
-    // Volume
-    volumeSlider.oninput = (e) => {
-        video.volume = e.target.value;
-        video.muted = false;
-        if (video.volume === 0) {
-            volumeIcon.innerHTML = '<i class="fas fa-volume-mute"></i>';
-        } else if (video.volume < 0.5) {
-            volumeIcon.innerHTML = '<i class="fas fa-volume-down"></i>';
-        } else {
-            volumeIcon.innerHTML = '<i class="fas fa-volume-up"></i>';
-        }
-    };
-
-    volumeIcon.onclick = () => {
-        video.muted = !video.muted;
-        if (video.muted) {
-            volumeIcon.innerHTML = '<i class="fas fa-volume-mute"></i>';
-        } else {
-            volumeIcon.innerHTML = '<i class="fas fa-volume-up"></i>';
-        }
-    };
-
-    // Playback Speed
-    speedSelect.onchange = (e) => {
-        video.playbackRate = parseFloat(e.target.value);
-    };
-
-    // Fullscreen
-    fullscreenBtn.onclick = () => {
-        if (!document.fullscreenElement) {
-            playerBox.requestFullscreen().catch(err => console.log(err));
-            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
-        } else {
-            document.exitFullscreen();
-            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-        }
-    };
-
-    // Server Switcher
-    if (serverSelect) {
-        serverSelect.onchange = (e) => {
-            const currentPosition = video.currentTime;
-            const source = document.getElementById('main-video-source');
-            source.src = e.target.value;
-            video.load();
-            video.currentTime = currentPosition;
-            video.play();
-            showToast(`Switched stream: ${e.target.options[e.target.selectedIndex].text}`);
-        };
+    // Hook Season / Episode Selection
+    const seasonSelect = document.getElementById('season-select');
+    const episodeSelect = document.getElementById('episode-select');
+    if (seasonSelect) {
+        seasonSelect.addEventListener('change', (e) => {
+            currentSeason = parseInt(e.target.value, 10);
+            reloadStreamFrame();
+            showToast(`Loading Season ${currentSeason}, Episode ${currentEpisode}...`);
+        });
+    }
+    if (episodeSelect) {
+        episodeSelect.addEventListener('change', (e) => {
+            currentEpisode = parseInt(e.target.value, 10);
+            reloadStreamFrame();
+            showToast(`Loading Season ${currentSeason}, Episode ${currentEpisode}...`);
+        });
     }
 }
 
