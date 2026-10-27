@@ -32,10 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // All pill
         const allPill = document.createElement('div');
         allPill.className = 'genre-pill active';
-        allPill.textContent = 'All';
+        allPill.textContent = 'All (Mixed)';
         allPill.dataset.id = '';
         allPill.onclick = () => selectGenre(allPill);
         genreList.appendChild(allPill);
+
+        // Bollywood & Indian filter pill
+        const bollywoodPill = document.createElement('div');
+        bollywoodPill.className = 'genre-pill';
+        bollywoodPill.innerHTML = '<i class="fas fa-film"></i> Bollywood / Indian';
+        bollywoodPill.dataset.id = 'bollywood';
+        bollywoodPill.onclick = () => selectGenre(bollywoodPill);
+        genreList.appendChild(bollywoodPill);
 
         genres.forEach(genre => {
             const pill = document.createElement('div');
@@ -63,10 +71,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             let res;
-            if (currentGenre) {
+            if (currentGenre === 'bollywood') {
+                res = type === 'movie' ? await api.getBollywoodMovies(currentPage) : await api.getBollywoodTV(currentPage);
+            } else if (currentGenre) {
                 res = await api.getByGenre(currentGenre, type, currentPage);
             } else {
-                res = type === 'movie' ? await api.getPopularMovies(currentPage) : await api.getPopularTV(currentPage);
+                // Mix Hollywood and Bollywood on page 1 of All
+                if (currentPage === 1) {
+                    const [globalRes, bollyRes] = await Promise.all([
+                        type === 'movie' ? api.getPopularMovies(1) : api.getPopularTV(1),
+                        type === 'movie' ? api.getBollywoodMovies(1) : api.getBollywoodTV(1)
+                    ]);
+                    const gList = globalRes?.results || [];
+                    const bList = bollyRes?.results || [];
+                    const mixed = [];
+                    const maxL = Math.max(gList.length, bList.length);
+                    for (let i = 0; i < maxL; i++) {
+                        if (i < gList.length) mixed.push(gList[i]);
+                        if (i < bList.length) mixed.push(bList[i]);
+                    }
+                    res = { results: mixed, total_pages: Math.max(globalRes?.total_pages || 1, bollyRes?.total_pages || 1) };
+                } else {
+                    res = type === 'movie' ? await api.getPopularMovies(currentPage) : await api.getPopularTV(currentPage);
+                }
             }
             
             if (res && res.results) {

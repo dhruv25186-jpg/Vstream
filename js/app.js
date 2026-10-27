@@ -75,18 +75,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Interleave Hollywood & Bollywood arrays for an exciting mix
+function interleaveContent(arr1, arr2) {
+    const list1 = arr1 || [];
+    const list2 = arr2 || [];
+    const mixed = [];
+    const maxLen = Math.max(list1.length, list2.length);
+    for (let i = 0; i < maxLen; i++) {
+        if (i < list1.length) mixed.push(list1[i]);
+        if (i < list2.length) mixed.push(list2[i]);
+    }
+    return mixed;
+}
+
 async function loadHomePage() {
     try {
-        // Fetch trending for hero
-        const trendingRes = await api.getTrending('day');
+        // Fetch trending global and bollywood concurrently
+        const [trendingRes, bollywoodMovies, bollywoodTV] = await Promise.all([
+            api.getTrending('day'),
+            api.getBollywoodMovies(),
+            api.getBollywoodTV()
+        ]);
+
         if (trendingRes && trendingRes.results.length > 0) {
-            // Pick a random movie/show from top 5
-            const randomIdx = Math.floor(Math.random() * Math.min(5, trendingRes.results.length));
-            const heroItem = trendingRes.results[randomIdx];
+            // Mix trending with top Bollywood hits
+            const mixedTrending = interleaveContent(trendingRes.results, bollywoodMovies ? bollywoodMovies.results : []);
+            
+            // Pick a random highlight from top 6 mixed items
+            const randomIdx = Math.floor(Math.random() * Math.min(6, mixedTrending.length));
+            const heroItem = mixedTrending[randomIdx];
             populateHero(heroItem);
             
-            // Populate trending row
-            populateRow('trending-row', trendingRes.results);
+            // Populate trending row with balanced Hollywood + Bollywood
+            populateRow('trending-row', mixedTrending);
         }
 
         // Fetch other rows concurrently
@@ -94,12 +115,37 @@ async function loadHomePage() {
             api.getPopularMovies(),
             api.getTopRated(),
             api.getPopularTV(),
-            api.getUpcoming()
-        ]).then(([popularMovies, topRated, popularTV, upcoming]) => {
-            if (popularMovies) populateRow('popular-movies-row', popularMovies.results, 'movie');
+            api.getUpcoming(),
+            api.getIndianUpcoming()
+        ]).then(([popularMovies, topRated, popularTV, upcoming, indianUpcoming]) => {
+            // 1. Popular Movies (Mixed Hollywood + Bollywood)
+            const mixedPopular = interleaveContent(
+                popularMovies ? popularMovies.results : [],
+                bollywoodMovies ? bollywoodMovies.results : []
+            );
+            if (mixedPopular.length > 0) populateRow('popular-movies-row', mixedPopular, 'movie');
+
+            // 2. Dedicated Bollywood & Indian Cinema Spotlight Row
+            if (bollywoodMovies && bollywoodMovies.results) {
+                populateRow('bollywood-movies-row', bollywoodMovies.results, 'movie');
+            }
+
+            // 3. Top Rated (Mixed Global & Top Indian Classics)
             if (topRated) populateRow('top-rated-row', topRated.results, 'movie');
-            if (popularTV) populateRow('popular-tv-row', popularTV.results, 'tv');
-            if (upcoming) populateRow('upcoming-row', upcoming.results, 'movie');
+
+            // 4. Popular TV Shows (Mixed Hollywood & Indian series)
+            const mixedTV = interleaveContent(
+                popularTV ? popularTV.results : [],
+                bollywoodTV ? bollywoodTV.results : []
+            );
+            if (mixedTV.length > 0) populateRow('popular-tv-row', mixedTV, 'tv');
+
+            // 5. Upcoming Releases (Hollywood & Bollywood upcoming)
+            const mixedUpcoming = interleaveContent(
+                upcoming ? upcoming.results : [],
+                indianUpcoming ? indianUpcoming.results : []
+            );
+            if (mixedUpcoming.length > 0) populateRow('upcoming-row', mixedUpcoming, 'movie');
         });
 
     } catch (error) {

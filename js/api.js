@@ -48,6 +48,11 @@ const api = {
     getGenres: (type = 'movie') => fetchAPI(`/genre/${type}/list?api_key=${API_KEY}`),
     getByGenre: (genreId, type = 'movie', page = 1) => fetchAPI(`/discover/${type}?api_key=${API_KEY}&with_genres=${genreId}&page=${page}`),
     
+    // Bollywood & Regional Indian
+    getBollywoodMovies: (page = 1) => fetchAPI(`/discover/movie?api_key=${API_KEY}&with_original_language=hi&sort_by=popularity.desc&page=${page}`),
+    getBollywoodTV: (page = 1) => fetchAPI(`/discover/tv?api_key=${API_KEY}&with_original_language=hi&sort_by=popularity.desc&page=${page}`),
+    getIndianUpcoming: (page = 1) => fetchAPI(`/discover/movie?api_key=${API_KEY}&with_origin_country=IN&sort_by=popularity.desc&page=${page}`),
+    
     getImageURL
 };
 
