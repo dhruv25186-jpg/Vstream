@@ -118,17 +118,22 @@ async function loadHomePage() {
             api.getUpcoming(),
             api.getIndianUpcoming()
         ]).then(([popularMovies, topRated, popularTV, upcoming, indianUpcoming]) => {
-            // 1. Popular Movies (Mixed Hollywood + Bollywood)
+            // 1. Dedicated Hollywood Blockbusters Row
+            if (popularMovies && popularMovies.results) {
+                populateRow('hollywood-movies-row', popularMovies.results, 'movie');
+            }
+
+            // 2. Dedicated Bollywood & Indian Cinema Row
+            if (bollywoodMovies && bollywoodMovies.results) {
+                populateRow('bollywood-movies-row', bollywoodMovies.results, 'movie');
+            }
+
+            // 3. Mixed Popular Movies (Hollywood + Bollywood alternating)
             const mixedPopular = interleaveContent(
                 popularMovies ? popularMovies.results : [],
                 bollywoodMovies ? bollywoodMovies.results : []
             );
             if (mixedPopular.length > 0) populateRow('popular-movies-row', mixedPopular, 'movie');
-
-            // 2. Dedicated Bollywood & Indian Cinema Spotlight Row
-            if (bollywoodMovies && bollywoodMovies.results) {
-                populateRow('bollywood-movies-row', bollywoodMovies.results, 'movie');
-            }
 
             // 3. Top Rated (Mixed Global & Top Indian Classics)
             if (topRated) populateRow('top-rated-row', topRated.results, 'movie');
