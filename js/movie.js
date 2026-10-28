@@ -447,25 +447,6 @@ function openTrailerModal(mode = 'stream') {
     }
 }
 
-    // Hook Season / Episode Selection
-    const seasonSelect = document.getElementById('season-select');
-    const episodeSelect = document.getElementById('episode-select');
-    if (seasonSelect) {
-        seasonSelect.addEventListener('change', (e) => {
-            currentSeason = parseInt(e.target.value, 10);
-            reloadStreamFrame();
-            showToast(`Loading Season ${currentSeason}, Episode ${currentEpisode}...`);
-        });
-    }
-    if (episodeSelect) {
-        episodeSelect.addEventListener('change', (e) => {
-            currentEpisode = parseInt(e.target.value, 10);
-            reloadStreamFrame();
-            showToast(`Loading Season ${currentSeason}, Episode ${currentEpisode}...`);
-        });
-    }
-}
-
 closeBtn.onclick = () => {
     modal.style.display = 'none';
     videoContainer.innerHTML = '';
