@@ -466,3 +466,301 @@ footer { padding: 40px 4%; background: #000; margin-top: 50px; }
     border-top: 1px solid #222;
     padding-top: 15px;
 }
+
+/* ========================================================
+   AutoEmbed Watch-V2 Interface Styling
+   ======================================================== */
+.autoembed-player-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+.autoembed-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 4px;
+}
+.autoembed-now-watching {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.watching-title {
+    color: var(--accent-color);
+}
+.autoembed-top-actions {
+    display: flex;
+    gap: 8px;
+}
+.autoembed-pill-btn {
+    background: #1e1e1e;
+    color: #ccc;
+    border: 1px solid #333;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+.autoembed-pill-btn:hover, .autoembed-pill-btn.active {
+    background: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+}
+
+/* Alert Notification Banner (Screenshot 3) */
+.autoembed-server-alert {
+    background: #000;
+    border: 1px solid #222;
+    color: #e0e0e0;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+}
+.autoembed-server-alert .alert-text {
+    flex-grow: 1;
+    font-weight: 500;
+}
+.alert-close-btn {
+    background: transparent;
+    color: #888;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+    transition: var(--transition);
+}
+.alert-close-btn:hover {
+    color: #fff;
+}
+
+/* Screen container */
+.autoembed-screen-container {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+}
+.autoembed-iframe-box {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    background: #000;
+}
+
+/* TV Episode selector */
+.autoembed-episode-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #111;
+    border: 1px solid #282828;
+    padding: 10px 16px;
+    border-radius: 6px;
+    flex-wrap: wrap;
+}
+.autoembed-episode-bar .bar-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #eee;
+}
+.autoembed-select {
+    background: #202020;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Bottom Action Bar */
+.autoembed-footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0a0a0a;
+    border: 1px solid #1c1c1c;
+    padding: 10px 18px;
+    border-radius: 6px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.autoembed-server-toggle-btn {
+    background: #1a1a1a;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+}
+.autoembed-server-toggle-btn:hover {
+    background: #262626;
+    border-color: #555;
+}
+.footer-right {
+    display: flex;
+    gap: 18px;
+}
+.footer-action-link {
+    background: transparent;
+    color: #ccc;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+.footer-action-link:hover {
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* AutoEmbed Server Drawer (Screenshots 1 & 2) */
+.autoembed-server-drawer {
+    display: none;
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+    animation: fadeIn 0.2s ease;
+}
+.autoembed-server-drawer.open {
+    display: block;
+}
+.drawer-header {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+.drawer-close-btn {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 4px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+.drawer-close-btn:hover {
+    background: #222;
+    border-color: #666;
+}
+.server-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+@media (max-width: 1024px) {
+    .server-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 768px) {
+    .server-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 480px) {
+    .server-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.server-tile {
+    background: #111;
+    border: 1px solid #242424;
+    border-radius: 8px;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+    user-select: none;
+}
+.server-tile:hover {
+    background: #1c1c1c;
+    border-color: #444;
+    transform: translateY(-2px);
+}
+.server-tile.active {
+    background: #ffffff;
+    color: #000;
+    border-color: #fff;
+    box-shadow: 0 0 15px rgba(255,255,255,0.4);
+}
+.server-tile.active .server-tile-name {
+    color: #000;
+    font-weight: 700;
+}
+.server-tile.active .tile-drag-dots {
+    color: #777;
+}
+.tile-drag-dots {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #444;
+}
+.server-flag {
+    width: 20px;
+    height: 15px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+.server-tile-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e0e0e0;
+    text-align: center;
+}
+.tile-check {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: #000;
+    color: #fff;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+}

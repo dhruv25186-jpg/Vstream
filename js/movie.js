@@ -192,182 +192,260 @@ const videoContainer = document.getElementById('video-player-container');
 
 let currentSeason = 1;
 let currentEpisode = 1;
+let currentServerIndex = 0;
+let isServerDrawerOpen = false;
+
+function buildAutoembedUrl(server, tmdbId, type, season, episode, imdbId = '') {
+    const isTV = type === 'tv';
+    let targetId = (server.idType === 'imdb' && imdbId) ? imdbId : tmdbId;
+    let base = server.url;
+
+    if (isTV) {
+        if (!base.includes('/tv') && !base.includes('serie') && !base.includes('/e/tv')) {
+            base = base.replace(/\/movie\/?/g, '/tv/');
+        }
+    } else {
+        base = base.replace(/\/tv\/?/g, '/movie/').replace(/\/serie\/?/g, '/filme/');
+    }
+
+    let formatted = server.urlFormat || 'id';
+    formatted = formatted.replace(/\bid\b/g, targetId);
+    formatted = formatted.replace(/\bseason\b/g, season);
+    formatted = formatted.replace(/\bepisode\b/g, episode);
+
+    let url = base + formatted;
+    if (server.extraParams) {
+        url += (url.includes('?') ? '&' : '?') + server.extraParams.replace(/^\?/, '');
+    }
+    return url;
+}
 
 function openTrailerModal(mode = 'stream') {
     const title = currentItem ? (currentItem.title || currentItem.name) : 'Video';
     const id = currentItem ? currentItem.id : '';
+    const imdbId = currentItem ? (currentItem.imdb_id || '') : '';
     const type = currentType || 'movie';
     const totalSeasons = (currentItem && currentItem.number_of_seasons) ? currentItem.number_of_seasons : 5;
 
-    // Helper to generate third-party streaming provider URLs for the selected movie/series
-    function getThirdPartyStreamUrl(providerKey, s = currentSeason, e = currentEpisode) {
-        const imdbId = currentItem ? (currentItem.imdb_id || '') : '';
-        if (type === 'tv') {
-            switch(providerKey) {
-                case 'vidlink': return `https://vidlink.pro/tv/${id}/${s}/${e}`;
-                case 'vidsrc_pm': return `https://vidsrc.pm/embed/tv/${id}/${s}/${e}`;
-                case 'vidsrc_net': return `https://vidsrc.net/embed/tv/${id}/${s}/${e}`;
-                case 'vidsrc_xyz': return `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}`;
-                case 'vidsrc_me': return `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`;
-                case 'autoembed': return `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`;
-                default: return `https://vidlink.pro/tv/${id}/${s}/${e}`;
-            }
-        } else {
-            // Movie
-            switch(providerKey) {
-                case 'vidlink': return `https://vidlink.pro/movie/${id}`;
-                case 'vidsrc_pm': return `https://vidsrc.pm/embed/movie/${id}`;
-                case 'vidsrc_net': return `https://vidsrc.net/embed/movie/${id}`;
-                case 'vidsrc_xyz': return `https://vidsrc.xyz/embed/movie?tmdb=${id}`;
-                case 'vidsrc_me': return `https://vidsrc.me/embed/movie?tmdb=${id}`;
-                case 'autoembed': return `https://player.autoembed.cc/embed/movie/${id}`;
-                default: return `https://vidlink.pro/movie/${id}`;
-            }
-        }
+    // Use full 47+ servers list from AUTOEMBED_SERVERS
+    const allServers = (typeof AUTOEMBED_SERVERS !== 'undefined' && AUTOEMBED_SERVERS.length) 
+        ? AUTOEMBED_SERVERS 
+        : [
+            { name: "Max", url: "https://ythd.org/embed/", countryUrl: "https://flagsapi.com/US/flat/24.png", idType: "tmdb", urlFormat: "id/season-episode" },
+            { name: "Vidpro", url: "https://vixsrc.to/tv/", countryUrl: "https://flagsapi.com/GB/flat/24.png", idType: "tmdb", urlFormat: "id/season/episode" },
+            { name: "Hindi", url: "https://nxsha.space/embed/tv/", countryUrl: "https://flagsapi.com/IN/flat/24.png", idType: "tmdb", urlFormat: "id/season/episode?lang=hindi&autoplay=true" }
+        ];
+
+    let selectedServer = allServers[currentServerIndex] || allServers[0];
+
+    function getCurrentStreamUrl() {
+        return buildAutoembedUrl(selectedServer, id, type, currentSeason, currentEpisode, imdbId);
     }
 
-    const streamProviders = [
-        { key: "vidlink", name: "Server 1 (VidLink Pro - Primary Fast Cloud)", type: "embed" },
-        { key: "vidsrc_pm", name: "Server 2 (VidSrc PM - Ultra Fast Global Mirror)", type: "embed" },
-        { key: "vidsrc_net", name: "Server 3 (VidSrc Net - High Speed Cloud)", type: "embed" },
-        { key: "vidsrc_xyz", name: "Server 4 (VidSrc Multi-Stream Mirror)", type: "embed" },
-        { key: "vidsrc_me", name: "Server 5 (VidSrc Original Cloud)", type: "embed" },
-        { key: "autoembed", name: "Server 6 (AutoEmbed Multi-Source Backup)", type: "embed" },
-        { key: "cdn_ocean", name: "Server 7 (VStream Direct CDN - 1080p)", type: "direct", url: "https://vjs.zencdn.net/v/oceans.mp4" },
-        { key: "cdn_sintel", name: "Server 8 (VStream Direct CDN - Sintel)", type: "direct", url: "https://media.w3.org/2010/05/sintel/trailer.mp4" }
-    ];
-
-    let selectedProvider = streamProviders[0];
-
     let modalHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
-            <div>
-                <h3 style="color:#fff; font-size:1.3rem; font-weight:700; margin-bottom:4px;">${title}</h3>
-                <span style="color:#aaa; font-size:12px;">
-                    <i class="fas fa-circle" style="color:#00e676; font-size:10px;"></i> Third-Party Movie Streaming Cloud Active
-                </span>
+        <div class="autoembed-player-wrapper">
+            <!-- Header bar: Title & close -->
+            <div class="autoembed-top-bar">
+                <div class="autoembed-now-watching">
+                    Now Watching: <span class="watching-title">${title}</span>
+                </div>
+                <div class="autoembed-top-actions">
+                    <button id="tab-trailer" class="autoembed-pill-btn ${mode === 'trailer' ? 'active' : ''}">
+                        <i class="fab fa-youtube" style="color:#ff0000;"></i> Trailer
+                    </button>
+                    <button id="tab-stream" class="autoembed-pill-btn ${mode === 'stream' ? 'active' : ''}">
+                        <i class="fas fa-play"></i> Watch Stream
+                    </button>
+                </div>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button id="tab-stream" class="btn ${mode === 'stream' ? 'btn-primary' : 'btn-secondary'}" style="padding:7px 16px; font-size:13px;"><i class="fas fa-play"></i> Watch Movie</button>
-                ${trailerKey ? `<button id="tab-trailer" class="btn ${mode === 'trailer' ? 'btn-primary' : 'btn-secondary'}" style="padding:7px 16px; font-size:13px;"><i class="fab fa-youtube"></i> Trailer</button>` : ''}
-            </div>
-        </div>
-    `;
 
-    if (mode === 'stream') {
-        modalHTML += `
-            <div id="player-display-area" style="position:relative; width:100%; border-radius:12px; overflow:hidden; background:#000; box-shadow:0 15px 40px rgba(0,0,0,0.9);">
-                <div id="iframe-wrapper" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; background:#000;">
+            <!-- Server banner notification as requested in 3rd screenshot -->
+            <div class="autoembed-server-alert" id="server-alert-banner">
+                <span class="alert-text">Please switch to other servers if default server doesnt work.</span>
+                <button class="alert-close-btn" id="close-alert-btn" title="Dismiss">&times;</button>
+            </div>
+
+            ${mode === 'stream' ? `
+            <!-- Player screen area -->
+            <div class="autoembed-screen-container">
+                <div class="autoembed-iframe-box" id="autoembed-screen">
                     <iframe id="main-stream-frame" 
-                        src="${getThirdPartyStreamUrl(selectedProvider.key)}" 
+                        src="${getCurrentStreamUrl()}" 
                         allowfullscreen 
                         allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                        style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;">
+                        style="width:100%; height:100%; border:0; position:absolute; inset:0;">
                     </iframe>
                 </div>
             </div>
 
-            <!-- TV Season / Episode Selector (If TV Show) -->
+            <!-- TV Season / Episode Bar (if TV) -->
             ${type === 'tv' ? `
-            <div style="margin-top:12px; background:#181818; padding:12px 18px; border-radius:8px; display:flex; gap:15px; align-items:center; flex-wrap:wrap; border:1px solid #333;">
-                <span style="color:#fff; font-weight:600; font-size:13px;"><i class="fas fa-list-ol"></i> Choose Episode:</span>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="color:#bbb; font-size:13px;">Season:</span>
-                    <select id="season-select" style="background:#222; color:#fff; border:1px solid #555; padding:6px 12px; border-radius:4px; font-size:13px; outline:none; cursor:pointer;">
-                        ${Array.from({length: totalSeasons}, (_, i) => `<option value="${i+1}" ${currentSeason === (i+1) ? 'selected' : ''}>Season ${i+1}</option>`).join('')}
-                    </select>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="color:#bbb; font-size:13px;">Episode:</span>
-                    <select id="episode-select" style="background:#222; color:#fff; border:1px solid #555; padding:6px 12px; border-radius:4px; font-size:13px; outline:none; cursor:pointer;">
-                        ${Array.from({length: 24}, (_, i) => `<option value="${i+1}" ${currentEpisode === (i+1) ? 'selected' : ''}>Episode ${i+1}</option>`).join('')}
-                    </select>
-                </div>
+            <div class="autoembed-episode-bar">
+                <span class="bar-label"><i class="fas fa-list-ol"></i> Episodes:</span>
+                <select id="season-select" class="autoembed-select">
+                    ${Array.from({length: totalSeasons}, (_, i) => `<option value="${i+1}" ${currentSeason === (i+1) ? 'selected' : ''}>Season ${i+1}</option>`).join('')}
+                </select>
+                <select id="episode-select" class="autoembed-select">
+                    ${Array.from({length: 24}, (_, i) => `<option value="${i+1}" ${currentEpisode === (i+1) ? 'selected' : ''}>Episode ${i+1}</option>`).join('')}
+                </select>
             </div>
             ` : ''}
 
-            <!-- Server switcher & controls -->
-            <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#141414; padding:12px 18px; border-radius:8px; border:1px solid #282828;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="color:#eee; font-size:13px; font-weight:600;"><i class="fas fa-server"></i> Switch Provider / Server:</span>
-                    <select id="server-select" style="background:#222; color:#fff; border:1px solid #444; padding:6px 12px; border-radius:4px; font-size:13px; outline:none; cursor:pointer;">
-                        ${streamProviders.map((s, idx) => `<option value="${idx}">${s.name}</option>`).join('')}
-                    </select>
+            <!-- Bottom Action Bar: Server toggle, Watchlist, Download -->
+            <div class="autoembed-footer-bar">
+                <div class="footer-left">
+                    <button class="autoembed-server-toggle-btn" id="toggle-servers-btn">
+                        <i class="fas fa-server"></i> Server: <strong>${selectedServer.name}</strong>
+                        <i class="fas ${isServerDrawerOpen ? 'fa-chevron-up' : 'fa-chevron-down'}" style="margin-left: 6px; font-size:11px;"></i>
+                    </button>
                 </div>
-                <div style="color:#aaa; font-size:13px; display:flex; gap:15px;">
-                    <span><i class="fas fa-shield-alt" style="color:#4caf50;"></i> Multi-Source Streaming</span>
-                    <span><i class="fas fa-closed-captioning"></i> Subtitles & Multi-Audio</span>
+                <div class="footer-right">
+                    <button class="footer-action-link" id="player-add-watchlist">
+                        <i class="far fa-bookmark"></i> Add to Watchlist
+                    </button>
+                    <button class="footer-action-link" id="player-download-btn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
                 </div>
             </div>
-        `;
-    } else {
-        // Trailer mode
-        modalHTML += `
-            <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:8px; background:#000;">
-                <iframe 
-                    src="https://www.youtube.com/embed/${trailerKey}?autoplay=1&rel=0&modestbranding=1" 
-                    allowfullscreen 
-                    allow="autoplay; encrypted-media; picture-in-picture"
-                    style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;">
-                </iframe>
+
+            <!-- Autoembed Server Drawer / Grid with flags as in screenshots 1 & 2 -->
+            <div class="autoembed-server-drawer ${isServerDrawerOpen ? 'open' : ''}" id="server-drawer">
+                <div class="drawer-header">
+                    <button class="drawer-close-btn" id="drawer-close-action">
+                        <i class="fas fa-chevron-up"></i> Close
+                    </button>
+                </div>
+
+                <div class="server-grid">
+                    ${allServers.map((s, idx) => `
+                        <div class="server-tile ${idx === currentServerIndex ? 'active' : ''}" data-index="${idx}">
+                            <div class="tile-drag-dots"><i class="fas fa-ellipsis-v"></i></div>
+                            <img src="${s.countryUrl}" alt="flag" class="server-flag" onerror="this.style.display='none'">
+                            <span class="server-tile-name">${s.name}</span>
+                            ${idx === currentServerIndex ? `<span class="tile-check"><i class="fas fa-check"></i></span>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; flex-wrap:wrap; gap:10px; background:#181818; padding:12px 16px; border-radius:6px;">
-                <span style="color:#aaa; font-size:13px;"><i class="fas fa-info-circle" style="color:#f39c12;"></i> Official YouTube trailer stream for this title.</span>
-                <a href="https://www.youtube.com/watch?v=${trailerKey}" target="_blank" 
-                   class="btn btn-secondary" style="display:inline-flex; gap:8px; align-items:center; font-size:13px; padding:6px 14px;">
-                    <i class="fab fa-youtube" style="color:#ff0000;"></i> Open YouTube Tab
-                </a>
+            ` : `
+            <!-- Trailer mode -->
+            <div class="autoembed-screen-container">
+                <div class="autoembed-iframe-box">
+                    <iframe 
+                        src="https://www.youtube.com/embed/${trailerKey}?autoplay=1&rel=0&modestbranding=1" 
+                        allowfullscreen 
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                        style="width:100%; height:100%; border:0; position:absolute; inset:0;">
+                    </iframe>
+                </div>
             </div>
-        `;
-    }
+            `}
+        </div>
+    `;
 
     videoContainer.innerHTML = modalHTML;
     modal.style.display = 'block';
 
-    // Hook tab switches
+    // Hook tab buttons
     const tabTrailer = document.getElementById('tab-trailer');
     const tabStream = document.getElementById('tab-stream');
     if (tabTrailer) tabTrailer.onclick = () => openTrailerModal('trailer');
     if (tabStream) tabStream.onclick = () => openTrailerModal('stream');
 
-    // Function to reload stream frame
-    function reloadStreamFrame() {
-        const playerArea = document.getElementById('player-display-area');
-        if (!playerArea) return;
+    // Alert dismiss
+    const alertCloseBtn = document.getElementById('close-alert-btn');
+    const alertBanner = document.getElementById('server-alert-banner');
+    if (alertCloseBtn && alertBanner) {
+        alertCloseBtn.onclick = () => alertBanner.style.display = 'none';
+    }
 
-        if (selectedProvider.type === 'embed') {
-            const url = getThirdPartyStreamUrl(selectedProvider.key, currentSeason, currentEpisode);
-            playerArea.innerHTML = `
-                <div id="iframe-wrapper" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; background:#000;">
-                    <iframe 
-                        src="${url}" 
-                        allowfullscreen 
-                        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                        style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;">
-                    </iframe>
-                </div>
-            `;
-        } else {
-            // Direct video
-            playerArea.innerHTML = `
-                <video controls autoplay playsinline style="width:100%; max-height:68vh; display:block; outline:none; background:#000;">
-                    <source src="${selectedProvider.url}" type="video/mp4">
-                    Your browser does not support HTML5 video streaming.
-                </video>
+    // Toggle server drawer
+    const toggleServersBtn = document.getElementById('toggle-servers-btn');
+    const drawerCloseAction = document.getElementById('drawer-close-action');
+    const serverDrawer = document.getElementById('server-drawer');
+
+    function toggleDrawer(open) {
+        isServerDrawerOpen = open !== undefined ? open : !isServerDrawerOpen;
+        if (serverDrawer) {
+            serverDrawer.classList.toggle('open', isServerDrawerOpen);
+        }
+        if (toggleServersBtn) {
+            const icon = toggleServersBtn.querySelector('.fa-chevron-down, .fa-chevron-up');
+            if (icon) {
+                icon.className = `fas ${isServerDrawerOpen ? 'fa-chevron-up' : 'fa-chevron-down'}`;
+            }
+        }
+    }
+
+    if (toggleServersBtn) toggleServersBtn.onclick = () => toggleDrawer();
+    if (drawerCloseAction) drawerCloseAction.onclick = () => toggleDrawer(false);
+
+    // Watchlist & Download from player
+    const playerWatchlist = document.getElementById('player-add-watchlist');
+    if (playerWatchlist) {
+        playerWatchlist.onclick = () => {
+            if (currentItem) {
+                listManager.add(currentItem, type);
+                showToast("Added to your Watchlist!");
+            }
+        };
+    }
+    const playerDownload = document.getElementById('player-download-btn');
+    if (playerDownload) {
+        playerDownload.onclick = () => {
+            modal.style.display = 'none';
+            openDownloadModal();
+        };
+    }
+
+    // Reload iframe when changing server or episode
+    function reloadPlayer() {
+        const frame = document.getElementById('main-stream-frame');
+        if (frame) {
+            frame.src = getCurrentStreamUrl();
+        }
+        if (toggleServersBtn) {
+            toggleServersBtn.innerHTML = `
+                <i class="fas fa-server"></i> Server: <strong>${selectedServer.name}</strong>
+                <i class="fas ${isServerDrawerOpen ? 'fa-chevron-up' : 'fa-chevron-down'}" style="margin-left: 6px; font-size:11px;"></i>
             `;
         }
     }
 
-    // Hook Server selection
-    const serverSelect = document.getElementById('server-select');
-    if (serverSelect) {
-        serverSelect.addEventListener('change', (e) => {
-            const idx = parseInt(e.target.value, 10);
-            selectedProvider = streamProviders[idx];
-            reloadStreamFrame();
-            showToast(`Connected to ${selectedProvider.name.split('(')[1].replace(')', '')}`);
-        });
+    // Server tiles click
+    document.querySelectorAll('.server-tile').forEach(tile => {
+        tile.onclick = () => {
+            currentServerIndex = parseInt(tile.dataset.index, 10);
+            selectedServer = allServers[currentServerIndex];
+            
+            document.querySelectorAll('.server-tile').forEach(t => t.classList.remove('active'));
+            tile.classList.add('active');
+            
+            showToast(`Connected to server: ${selectedServer.name}`);
+            reloadPlayer();
+            toggleDrawer(false);
+        };
+    });
+
+    // Season / Episode change
+    const seasonSelect = document.getElementById('season-select');
+    const episodeSelect = document.getElementById('episode-select');
+    if (seasonSelect) {
+        seasonSelect.onchange = (e) => {
+            currentSeason = parseInt(e.target.value, 10);
+            reloadPlayer();
+            showToast(`Loading Season ${currentSeason}, Episode ${currentEpisode}...`);
+        };
     }
+    if (episodeSelect) {
+        episodeSelect.onchange = (e) => {
+            currentEpisode = parseInt(e.target.value, 10);
+            reloadPlayer();
+            showToast(`Loading Season ${currentSeason}, Episode ${currentEpisode}...`);
+        };
+    }
+}
 
     // Hook Season / Episode Selection
     const seasonSelect = document.getElementById('season-select');
