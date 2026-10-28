@@ -798,3 +798,13 @@ footer { padding: 40px 4%; background: #000; margin-top: 50px; }
     opacity: 0.6;
     margin-bottom: 4px;
 }
+.ad-banner-box iframe {
+    max-width: 100% !important;
+}
+@media (max-width: 768px) {
+    .ad-banner-box {
+        overflow-x: auto;
+        border: none;
+        background: transparent;
+    }
+}
