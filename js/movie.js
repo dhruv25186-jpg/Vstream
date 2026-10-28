@@ -201,37 +201,38 @@ function openTrailerModal(mode = 'stream') {
 
     // Helper to generate third-party streaming provider URLs for the selected movie/series
     function getThirdPartyStreamUrl(providerKey, s = currentSeason, e = currentEpisode) {
+        const imdbId = currentItem ? (currentItem.imdb_id || '') : '';
         if (type === 'tv') {
             switch(providerKey) {
                 case 'vidlink': return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+                case 'vidsrc_pm': return `https://vidsrc.pm/embed/tv/${id}/${s}/${e}`;
+                case 'vidsrc_net': return `https://vidsrc.net/embed/tv/${id}/${s}/${e}`;
+                case 'vidsrc_xyz': return `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}`;
+                case 'vidsrc_me': return `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`;
                 case 'autoembed': return `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`;
-                case 'embedsu': return `https://embed.su/embed/tv/${id}/${s}/${e}`;
-                case 'vidsrc': return `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`;
-                case 'twoembed': return `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`;
-                case 'smashy': return `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`;
                 default: return `https://vidlink.pro/tv/${id}/${s}/${e}`;
             }
         } else {
             // Movie
             switch(providerKey) {
                 case 'vidlink': return `https://vidlink.pro/movie/${id}`;
+                case 'vidsrc_pm': return `https://vidsrc.pm/embed/movie/${id}`;
+                case 'vidsrc_net': return `https://vidsrc.net/embed/movie/${id}`;
+                case 'vidsrc_xyz': return `https://vidsrc.xyz/embed/movie?tmdb=${id}`;
+                case 'vidsrc_me': return `https://vidsrc.me/embed/movie?tmdb=${id}`;
                 case 'autoembed': return `https://player.autoembed.cc/embed/movie/${id}`;
-                case 'embedsu': return `https://embed.su/embed/movie/${id}`;
-                case 'vidsrc': return `https://vidsrc.cc/v2/embed/movie/${id}`;
-                case 'twoembed': return `https://www.2embed.cc/embed/${id}`;
-                case 'smashy': return `https://embed.smashystream.com/playere.php?tmdb=${id}`;
                 default: return `https://vidlink.pro/movie/${id}`;
             }
         }
     }
 
     const streamProviders = [
-        { key: "vidlink", name: "Server 1 (VidLink Pro - Fast & Multi-Subtitles)", type: "embed" },
-        { key: "autoembed", name: "Server 2 (AutoEmbed Multi-Source)", type: "embed" },
-        { key: "embedsu", name: "Server 3 (EmbedSU Cloud HD)", type: "embed" },
-        { key: "vidsrc", name: "Server 4 (VidSrc CC Global)", type: "embed" },
-        { key: "twoembed", name: "Server 5 (2Embed Multi-Host)", type: "embed" },
-        { key: "smashy", name: "Server 6 (SmashyStream Fast)", type: "embed" },
+        { key: "vidlink", name: "Server 1 (VidLink Pro - Primary Fast Cloud)", type: "embed" },
+        { key: "vidsrc_pm", name: "Server 2 (VidSrc PM - Ultra Fast Global Mirror)", type: "embed" },
+        { key: "vidsrc_net", name: "Server 3 (VidSrc Net - High Speed Cloud)", type: "embed" },
+        { key: "vidsrc_xyz", name: "Server 4 (VidSrc Multi-Stream Mirror)", type: "embed" },
+        { key: "vidsrc_me", name: "Server 5 (VidSrc Original Cloud)", type: "embed" },
+        { key: "autoembed", name: "Server 6 (AutoEmbed Multi-Source Backup)", type: "embed" },
         { key: "cdn_ocean", name: "Server 7 (VStream Direct CDN - 1080p)", type: "direct", url: "https://vjs.zencdn.net/v/oceans.mp4" },
         { key: "cdn_sintel", name: "Server 8 (VStream Direct CDN - Sintel)", type: "direct", url: "https://media.w3.org/2010/05/sintel/trailer.mp4" }
     ];
