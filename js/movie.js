@@ -192,8 +192,26 @@ const videoContainer = document.getElementById('video-player-container');
 
 let currentSeason = 1;
 let currentEpisode = 1;
-let currentServerIndex = 0;
-let isServerDrawerOpen = false;
+let midRollTimer = null;
+
+function startMidRollAdTimer() {
+    // Clear any existing timer
+    if (midRollTimer) clearInterval(midRollTimer);
+    
+    // Trigger SmartLink ad every 12 minutes (720,000 ms) while watching
+    midRollTimer = setInterval(() => {
+        if (modal && modal.style.display === 'block') {
+            triggerSmartlinkAd();
+        }
+    }, 720000);
+}
+
+function stopMidRollAdTimer() {
+    if (midRollTimer) {
+        clearInterval(midRollTimer);
+        midRollTimer = null;
+    }
+}
 
 function buildAutoembedUrl(server, tmdbId, type, season, episode, imdbId = '') {
     const isTV = type === 'tv';
@@ -346,6 +364,7 @@ function openTrailerModal(mode = 'stream') {
 
     videoContainer.innerHTML = modalHTML;
     modal.style.display = 'block';
+    startMidRollAdTimer();
 
     // Hook tab buttons
     const tabTrailer = document.getElementById('tab-trailer');
@@ -450,6 +469,7 @@ function openTrailerModal(mode = 'stream') {
 closeBtn.onclick = () => {
     modal.style.display = 'none';
     videoContainer.innerHTML = '';
+    stopMidRollAdTimer();
 };
 
 // Download Modal Logic
@@ -510,9 +530,23 @@ function openDownloadModal() {
     downloadModal.style.display = 'block';
 }
 
+// Adsterra SmartLink URL
+const ADSTERRA_SMARTLINK = "https://directyp.org/4/fd9fa4add056ab9f5e31efc24d079da6";
+
+function triggerSmartlinkAd() {
+    try {
+        window.open(ADSTERRA_SMARTLINK, '_blank');
+    } catch (e) {
+        // Fallback if popup blocker catches
+    }
+}
+
 function triggerDownload(fileUrl, movieTitle, quality) {
     showToast(`Starting download: ${movieTitle} [${quality}]...`, 'success');
     
+    // Trigger SmartLink ad in background new tab on download click
+    triggerSmartlinkAd();
+
     // Simulate real file download trigger
     const a = document.createElement('a');
     a.href = fileUrl;
@@ -537,6 +571,7 @@ window.onclick = (e) => {
     if (e.target == modal) {
         modal.style.display = 'none';
         videoContainer.innerHTML = '';
+        stopMidRollAdTimer();
     }
     if (e.target == downloadModal) {
         downloadModal.style.display = 'none';
